@@ -1,0 +1,71 @@
+# =========================
+# Python / build artifacts
+# =========================
+__pycache__/
+*.py[cod]
+*.pyd
+*.so
+*.egg-info/
+dist/
+build/
+
+# =========================
+# Virtual envs
+# =========================
+.venv/
+venv/
+env/
+.conda/
+
+# =========================
+# IDE / OS
+# =========================
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# =========================
+# Data (never commit)
+# =========================
+data/raw/
+data/processed/
+datasets/
+dataset/
+**/*.pcap
+**/*.pcapng
+**/*.zip
+**/*.tar
+**/*.gz
+**/*.7z
+
+# Modbus local path variants
+**/CICModbus2023/
+**/flows_labeled.csv
+
+# =========================
+# Outputs / artifacts
+# =========================
+results/
+cache/
+**/*.png
+**/*.xlsx
+**/*.csv
+**/*.log
+
+# =========================
+# Secrets / local configs
+# =========================
+.env
+.env.*
+config_local.py
+**/credentials*
+**/*secret*
+
+# =========================
+# Exclude unused/old experimental files (optional)
+# =========================
+inspect_dataset.py
+optimizers/fab_abc_selector.py
+optimizers/hybrid_selector.py
+optimizers/greedy_abc_selector.py
