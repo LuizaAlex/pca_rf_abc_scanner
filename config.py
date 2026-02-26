@@ -58,7 +58,7 @@ BAMS_RHO_F = 0.40
 # ---------------------------
 USE_REAL_DATASET = True
 DATASET_NAME = "ciciov2024"  # "ciciov2024" | "modbus2023" | "cicmalanal2017" | "dohbrw2020"
-LABEL_MODE = "binary"        # "binary" or "multiclass"
+LABEL_MODE = "multiclass"        # "binary" or "multiclass"
 
 # Sampling to keep runs fast (applies to loaders that support it)
 SAMPLE_PER_CLASS = 1_000
