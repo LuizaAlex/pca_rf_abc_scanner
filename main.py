@@ -284,6 +284,23 @@ def main():
         fitness_weights=weights
     )
 
+    print("\n=== Confusion on SCANNED items (binary view) ===")
+    print("Strategy | Scanned | TP | TN | FP | FN")
+    print("-" * 55)
+
+    for strat in strategies:
+        tp = int(per_strategy[strat]["tp_scanned"].sum()) if per_strategy[strat]["tp_scanned"].ndim else int(
+            per_strategy[strat]["tp_scanned"])
+        tn = int(per_strategy[strat]["tn_scanned"].sum()) if per_strategy[strat]["tn_scanned"].ndim else int(
+            per_strategy[strat]["tn_scanned"])
+        fp = int(per_strategy[strat]["fp_scanned"].sum()) if per_strategy[strat]["fp_scanned"].ndim else int(
+            per_strategy[strat]["fp_scanned"])
+        fn = int(per_strategy[strat]["fn_scanned"].sum()) if per_strategy[strat]["fn_scanned"].ndim else int(
+            per_strategy[strat]["fn_scanned"])
+
+        scanned = tp + tn + fp + fn
+        print(f"{strat:>9} | {scanned:6d} | {tp:3d} | {tn:3d} | {fp:3d} | {fn:3d}")
+
     out_dir = make_results_dir()
     print(f"\nSaved outputs will be written to: {out_dir.resolve()}")
 
@@ -327,6 +344,29 @@ def main():
         })
 
     df_summary = pd.DataFrame(table_rows)
+
+    print("\n=== Final False Negatives (global, binary view) ===")
+    print("Strategy | Mean FN ±95%CI | Std | CV(std/mean) | Median | Min..Max")
+    print("-" * 80)
+
+    for strat in strategies:
+        fns = per_strategy[strat]["final_fn"]
+        mean, ci = ci95_of_mean(fns)
+        d = describe_runs(fns)
+
+        print(
+            f"{strat:>9} | "
+            f"{mean:10.1f} ± {ci:8.1f} | "
+            f"{d['std']:8.1f} | "
+            f"{d['cv'] * 100:11.3f}% | "
+            f"{d['median']:10.1f} | "
+            f"{d['min']:10.1f} .. {d['max']:10.1f}"
+        )
+
+    # Optional: print raw FN per run (useful for debugging)
+    print("\nRaw FN per run:")
+    for strat in strategies:
+        print(f"{strat:>9}: {per_strategy[strat]['final_fn'].astype(int).tolist()}")
 
     # Forensic coverage AUC (unique attack classes vs cost)
     print("\n=== Forensics: AUC (unique attack classes vs cost) ===")

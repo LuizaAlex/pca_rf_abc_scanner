@@ -157,7 +157,7 @@ def main():
     else:
         print(f"True label: {true_label} -> {'ATTACK' if is_attack else 'BENIGN'}")
 
-    print("\n=== BAMS-ABC single-scan benchmark ===")
+    print("\n=== MSBA-ABC single-scan benchmark ===")
     print(f"Dataset: {getattr(config, 'DATASET_NAME', 'unknown')} | LABEL_MODE={getattr(config, 'LABEL_MODE', 'binary')}")
     print(f"Selected index: {idx}")
     print(f"Score p(i): {score:.6f}")
@@ -165,7 +165,7 @@ def main():
     print(f"Inspection cost c(i): {cost_i:.6f}")
     print(f"Timing breakdown:")
     print(f"  predict_proba on avail: {t_proba*1000:.2f} ms")
-    print(f"  BAMS-ABC selection:     {t_sel*1000:.2f} ms")
+    print(f"  MSBA-ABC selection:     {t_sel*1000:.2f} ms")
     print(f"  scan(batch):            {t_scan*1000:.2f} ms")
     print(f"  TOTAL (score+select+scan): {t_total*1000:.2f} ms")
 

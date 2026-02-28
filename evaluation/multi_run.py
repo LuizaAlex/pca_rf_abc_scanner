@@ -63,6 +63,17 @@ def run_many(
             "curves_balance": [],
             "curves_macro_f1": [],
             "times_sec": [],
+
+            # for false positive
+            "final_fn": [],
+            "final_fp": [],
+            "final_tp": [],
+            "final_tn": [],
+
+            "tp_scanned": [],
+            "tn_scanned": [],
+            "fp_scanned": [],
+            "fn_scanned": [],
         }
 
     for run_id, seed in enumerate(run_seeds, start=1):
@@ -89,6 +100,13 @@ def run_many(
                 fitness_weights=fitness_weights,
             )
 
+            per_strategy[strat]["final_fn"].append(int(hist.get("final_fn", 0)))
+            per_strategy[strat]["final_fp"].append(int(hist.get("final_fp", 0)))
+            per_strategy[strat]["final_tp"].append(int(hist.get("final_tp", 0)))
+            per_strategy[strat]["final_tn"].append(int(hist.get("final_tn", 0)))
+
+
+
             if strat == "random" and run_id == 1:
                 print("DEBUG cost_curve first/last:", hist["cost_curve"][:5], "...", hist["cost_curve"][-5:])
                 print("DEBUG coverage_curve first/last:", hist.get("attack_class_coverage_curve", [])[:10], "...",
@@ -106,6 +124,10 @@ def run_many(
             per_strategy[strat]["curves_cost"].append(hist.get("cost_curve", []))
             per_strategy[strat]["curves_vulns"].append(hist.get("vulns_curve", []))
 
+
+
+
+
             # Forensics: first-hit class coverage curve
             per_strategy[strat]["curves_coverage"].append(hist.get("attack_class_coverage_curve", []))
 
@@ -113,6 +135,11 @@ def run_many(
             per_strategy[strat]["curves_confirmed_coverage"].append(hist.get("confirmed_coverage_curve", []))
             per_strategy[strat]["curves_balance"].append(hist.get("evidence_balance_curve", []))
             per_strategy[strat]["curves_macro_f1"].append(hist.get("macro_f1_curve", []))
+
+            per_strategy[strat]["tp_scanned"].append(int(hist.get("tp_scanned", 0)))
+            per_strategy[strat]["tn_scanned"].append(int(hist.get("tn_scanned", 0)))
+            per_strategy[strat]["fp_scanned"].append(int(hist.get("fp_scanned", 0)))
+            per_strategy[strat]["fn_scanned"].append(int(hist.get("fn_scanned", 0)))
 
             del hist, world, rng
             gc.collect()
@@ -122,7 +149,20 @@ def run_many(
     for strat in strategies:
         per_strategy[strat]["aucs"] = np.array(per_strategy[strat]["aucs"], dtype=float)
         per_strategy[strat]["times_sec"] = np.array(per_strategy[strat]["times_sec"], dtype=float)  # NEW
+
+        #for false positive
+
+        per_strategy[strat]["final_fn"] = np.array(per_strategy[strat]["final_fn"], dtype=float)
+        per_strategy[strat]["final_fp"] = np.array(per_strategy[strat]["final_fp"], dtype=float)
+        per_strategy[strat]["final_tp"] = np.array(per_strategy[strat]["final_tp"], dtype=float)
+        per_strategy[strat]["final_tn"] = np.array(per_strategy[strat]["final_tn"], dtype=float)
+
+        per_strategy[strat]["tp_scanned"] = np.array(per_strategy[strat]["tp_scanned"], dtype=int)
+        per_strategy[strat]["tn_scanned"] = np.array(per_strategy[strat]["tn_scanned"], dtype=int)
+        per_strategy[strat]["fp_scanned"] = np.array(per_strategy[strat]["fp_scanned"], dtype=int)
+        per_strategy[strat]["fn_scanned"] = np.array(per_strategy[strat]["fn_scanned"], dtype=int)
     return per_strategy
+
 
 
 def make_common_cost_grid(per_strategy, num_points=200):

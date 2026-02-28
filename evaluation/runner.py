@@ -116,13 +116,23 @@ def run_experiment(
 
     if use_seed_cache and seed_file.exists():
         init_batch, y_init, c_init = load_seed_cache(seed_file)
-        world.scan(init_batch)  # update inspected state
+
+        #  Validate cache against current dataset size
+        n = len(world.y)
+        init_batch = np.asarray(init_batch, dtype=int)
+
+        if init_batch.size == 0 or init_batch.min() < 0 or init_batch.max() >= n:
+            print(f"[seed-cache] Cache incompatible with current dataset size (n={n}). Rebuilding seed cache.")
+            init_batch = select_random(avail, S, rng)
+            y_init, c_init = world.scan(init_batch)
+            save_seed_cache(seed_file, init_batch, y_init, c_init)
+        else:
+            world.scan(init_batch)  # update inspected state
     else:
         init_batch = select_random(avail, S, rng)
         y_init, c_init = world.scan(init_batch)
         if use_seed_cache:
             save_seed_cache(seed_file, init_batch, y_init, c_init)
-
     # Observed training set starts from the seed batch
     observed_X = world.X[init_batch]
     observed_y = y_init
@@ -188,6 +198,11 @@ def run_experiment(
         "confirmed_coverage_curve": [],
         "evidence_balance_curve": [],
         "macro_f1_curve": [],
+
+        "tp_scanned": 0,
+        "tn_scanned": 0,
+        "fp_scanned": 0,
+        "fn_scanned": 0,
     }
 
     history["total_vulns"] += count_attacks(y_init)
@@ -354,8 +369,22 @@ def run_experiment(
         else:
             raise ValueError(f"Unknown strategy: {strategy}")
 
+        # --- Confusion counts on scanned items (simple, per-scan) ---
+        # Predict labels for the chosen batch BEFORE scanning (so it's a real "online" prediction).
+        y_pred_batch = model.predict(world.X[batch]).astype(int)
+
+        # Binary view: benign=0, attack=1 (y != benign_class_id)
+        y_pred_bin = (y_pred_batch != benign_class_id).astype(int)
         # --- Scan selected batch (reveal labels, pay costs) ---
         y_new, c_new = world.scan(batch)
+
+        y_true_batch = y_new.astype(int)
+        y_true_bin = (y_true_batch != benign_class_id).astype(int)
+
+        history["tp_scanned"] += int(((y_pred_bin == 1) & (y_true_bin == 1)).sum())
+        history["tn_scanned"] += int(((y_pred_bin == 0) & (y_true_bin == 0)).sum())
+        history["fp_scanned"] += int(((y_pred_bin == 1) & (y_true_bin == 0)).sum())
+        history["fn_scanned"] += int(((y_pred_bin == 0) & (y_true_bin == 1)).sum())
 
         # Update observed training set
         observed_X = np.vstack([observed_X, world.X[batch]])
@@ -380,5 +409,28 @@ def run_experiment(
 
         # Record new forensics-success curves (aligned with cost_curve)
         append_forensics_success_curves()
+
+        # --- Final global FN/FP/TN/TP (binary view) ---
+        # Binary view: benign=0, attack=1 (y != benign)
+        y_true = world.y.astype(int)
+        y_true_bin = (y_true != benign_class_id).astype(int)
+
+        # Predict on all samples
+        y_pred = model.predict(world.X)
+        y_pred_bin = (np.asarray(y_pred).astype(int) != benign_class_id).astype(int)
+
+        tp = int(((y_true_bin == 1) & (y_pred_bin == 1)).sum())
+        tn = int(((y_true_bin == 0) & (y_pred_bin == 0)).sum())
+        fp = int(((y_true_bin == 0) & (y_pred_bin == 1)).sum())
+        fn = int(((y_true_bin == 1) & (y_pred_bin == 0)).sum())
+
+        history["final_tp"] = tp
+        history["final_tn"] = tn
+        history["final_fp"] = fp
+        history["final_fn"] = fn
+
+
+
+
 
     return history
